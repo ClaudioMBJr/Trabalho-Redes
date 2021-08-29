@@ -17,7 +17,6 @@ structsize = 28
 
 #Dicionario clientes
 listCon = []
-dicMensagens = {}
 
 def enviaMensagem(msg):
 	for con in listCon:
@@ -31,13 +30,29 @@ def verificaUsuario(usuarioConectado):
 			return True
 
 def baixaMensagensNovas(usuario):
-	mensagensNovas = " "
-	print(dicMensagens)
-	if(dicMensagens != {}):
-	 	for key in dicMensagens:
-	 			if(key == usuario):
-	 				mensagensNovas += dicMensagens[key] + "\n"
-	return mensagensNovas
+	#retirar o \n se não tiver mensagem
+		mensagensNovas = "\n"
+		if(dicMensagens != {}):
+			for key in dicMensagens:
+					if(key == usuario):
+						lista = dicMensagens[key].split(" ")
+						remetente = lista[0]
+						mensagem = ""
+						
+						for i in (lista[2 :]):
+							mensagem += i + " "
+							
+						mensagensNovas += remetente + " " + mensagem + "\n"
+						
+		return mensagensNovas
+
+def pegaMensagemSemUsuario(msg):
+	list = msg.split(" ")
+	msg = ""
+	for i in (list[1 :]):
+		msg += i + " "
+	return msg
+
 
 
 
@@ -48,12 +63,12 @@ def conectado(con, cliente):
 	while True:
 		if (verificaUsuario(usuario)):
 			mensagensNovas = baixaMensagensNovas(usuario)
-			#incluir o f
+			#incluir o f!
 			print(mensagensNovas)
 			con.send(mensagensNovas.encode('UTF-8'))
 
-			dicMensagens = {}
-			##salva no banco
+			#zerar dicionario
+			##salvar no banco
 
 			msg = con.recv(1024)
 			msg = msg.decode('UTF-8')	
@@ -62,9 +77,9 @@ def conectado(con, cliente):
 			
 			if(verificaUsuario(destinatario)):
 				if(destinatario in dicMensagens.keys()):
-					dicMensagens[destinatario] += "\n" + msg
+					dicMensagens[destinatario] += "\n" + usuario + " " + pegaMensagemSemUsuario(msg)
 				else:
-					dicMensagens.update({destinatario : msg})
+					dicMensagens.update({destinatario : usuario+  " " + msg})
 
 		else:
 			break
@@ -78,6 +93,8 @@ tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 orig = (HOST, PORT)
 tcp.bind(orig)
 tcp.listen(1)
+
+dicMensagens = {}
 
 while True:
     con, cliente = tcp.accept()
