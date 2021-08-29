@@ -34,7 +34,12 @@ print ('Para sair use CTRL+X\n')
 msg = input("Digite o nome do usuário: ")
 tcp.send (msg.encode())
 while msg != '\x18':
-	mostraMensagens()
+	msg = tcp.recv(1024)
+	msg = msg.decode('UTF-8')
+	print(msg)
+	if msg == "Usuário inválido":
+		print("Você foi desconectado!")
+		break
 	msg = input("Digite uma mensagem: ")
 	tcp.send (msg.encode())
 	
