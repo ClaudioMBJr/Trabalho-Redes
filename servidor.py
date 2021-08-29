@@ -15,14 +15,14 @@ vlSensor = None
 nmSensor = None
 structsize = 28
 
-# Funcao de recepcao e desempacotamento da mensagem
-def myRecv (socket):
-	try:
-		msg = socket.recv(structsize)
-		print (cliente, msg)
-		return struct.unpack('!IHh20s', msg)
-	except:
-		return None
+#Dicionario clientes
+listCon = []
+dicMensagens = {}
+
+def enviaMensagem(msg):
+	for con in listCon:
+		con.send(msg.encode('UTF-8'))
+
 
 def verificaUsuario(usuarioConectado):
 	usuarios = pd.read_csv('./usuarios.csv').iloc[:,:].values
@@ -30,40 +30,45 @@ def verificaUsuario(usuarioConectado):
 		if(usuarioConectado == usuario[0]):
 			return True
 
-def baixaMensagens(usuario):
-	mensagens = pd.read_csv('./mensagem.csv').iloc[:,:].values
-	mensagensDoUsuario = "Novas mensagens: \n"
-	for mensagem in mensagens:
-		if(usuario == mensagem[0]):
-			mensagensDoUsuario += mensagem[1] + "\n"
-	return mensagensDoUsuario
+def baixaMensagensNovas(usuario):
+	mensagensNovas = " "
+	print(dicMensagens)
+	if(dicMensagens != {}):
+	 	for key in dicMensagens:
+	 			if(key == usuario):
+	 				mensagensNovas += dicMensagens[key] + "\n"
+	return mensagensNovas
+
+
 
 def conectado(con, cliente):
 	print("Conectado ao cliente: ", cliente)
-	#idSensor, tpSensor, vlSensor, nmSensor = myRecv(con)
-	#print (cliente, idSensor, tpSensor, vlSensor, nmSensor.decode())
+	usuario = con.recv(1024).decode('UTF-8')
+	
 	while True:
-		msg = con.recv(1024)
-		msg = msg.decode('UTF-8')	# Decodifica a mensagem
-		if not msg: break
-		if(verificaUsuario(msg)):
-			print("Usuário conectado: ", msg)
-			mensagens = baixaMensagens(msg)
-			con.send(mensagens.encode('UTF-8'))
-		else:
-			print("Usuário não cadastrado: ", msg)
-			break
+		if (verificaUsuario(usuario)):
+			mensagensNovas = baixaMensagensNovas(usuario)
+			#incluir o f
+			print(mensagensNovas)
+			con.send(mensagensNovas.encode('UTF-8'))
 
-		msg = con.recv(1024)
-		msg = msg.decode('UTF-8')	# Decodifica a mensagem
-		if not msg: break
-		usuario = msg.split(" ")[0]
-		
-		if(verificaUsuario(usuario)):
-			con.send(msg.encode('UTF-8'))
+			dicMensagens = {}
+			##salva no banco
+
+			msg = con.recv(1024)
+			msg = msg.decode('UTF-8')	
+			if not msg: break
+			destinatario = msg.split(" ")[0]
 			
+			if(verificaUsuario(destinatario)):
+				if(destinatario in dicMensagens.keys()):
+					dicMensagens[destinatario] += "\n" + msg
+				else:
+					dicMensagens.update({destinatario : msg})
 
-
+		else:
+			break
+				
 
 	print("Cliente desconectado: ", cliente)
 	_thread.exit()
@@ -73,6 +78,7 @@ tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 orig = (HOST, PORT)
 tcp.bind(orig)
 tcp.listen(1)
+
 while True:
     con, cliente = tcp.accept()
     _thread.start_new_thread(conectado, tuple([con, cliente]))

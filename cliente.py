@@ -29,7 +29,7 @@ dest = (HOST, PORT)
 tcp.connect(dest)
 
 ######### Envia uma mensagem
-mySend (tcp, idSensor, tpSensor, vlSensor)
+# mySend (tcp, idSensor, tpSensor, vlSensor)
 print ('Para sair use CTRL+X\n')
 msg = input("Digite o nome do usuário: ")
 tcp.send (msg.encode())
