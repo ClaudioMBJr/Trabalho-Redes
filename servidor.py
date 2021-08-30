@@ -27,7 +27,7 @@ def verificaUsuario(usuarioConectado):
 			return True
 
 def baixaMensagensNovas(usuario):
-		mensagensNovas = " "
+		mensagensNovas = "\n"
 		chave = " "
 		if(dicMensagens != {}):
 			for key in dicMensagens:
@@ -61,11 +61,20 @@ def deletaChave(chave,dic):
 	if dic[chave] != " ":
 		del dic[chave]
 
-def salvaNoCSV(mensagem):
-	with open('mensagem.csv','w',newline = '') as csvfile:
-		writer = csv.writer(csvfile, delimiter = ' ')
-		writer.writerow(mensagem)
-	
+def salvaNoCSV(mensagem, usuario):
+	f = open('mensagem.csv', 'a', newline='', encoding='utf-8')
+	w = csv.writer(f)
+	listaDeMensagens = mensagem.split('\n')
+	for i in range(len(listaDeMensagens)):
+		msgSplit = listaDeMensagens[i].split(" ")
+		msgParaSalvar = ""
+		for i in msgSplit[1:]:
+			msgParaSalvar += i + " "
+		if(msgParaSalvar != ""):w.writerow([usuario, msgParaSalvar])
+		msgParaSalvar = ""
+
+	f.close()
+
 
 def conectado(con, cliente):
 	print("Conectado ao cliente: ", cliente)
@@ -75,14 +84,10 @@ def conectado(con, cliente):
 	while True:
 		if (verificaUsuario(usuario)):
 			mensagensNovas = baixaMensagensNovas(usuario)
-			#incluir o f! CHECK
-			print(mensagensNovas)
 			con.send(mensagensNovas.encode('UTF-8'))
 
-			salvaNoCSV(mensagensNovas)
-
-			
-			##salvar no banco 
+			if(mensagensNovas != "\n" and mensagensNovas !=  " "):
+				salvaNoCSV(mensagensNovas, usuario)
 
 			msg = con.recv(1024)
 			msg = msg.decode('UTF-8')	
